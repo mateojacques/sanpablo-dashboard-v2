@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LogOut, User, Menu, Package, LayoutDashboard, FolderTree, Images, Palette, HelpCircle, FileText, Wrench } from 'lucide-react';
+import { LogOut, User, Menu, Package } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {
@@ -16,49 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-type NavItem = {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
-
-type NavSection = {
-  title: string;
-  items: NavItem[];
-};
-
-const navigation: NavSection[] = [
-  {
-    title: 'Principal',
-    items: [
-      { title: 'Dashboard', href: '/', icon: LayoutDashboard },
-      { title: 'Productos', href: '/products', icon: Package },
-      { title: 'Categorías', href: '/categories', icon: FolderTree },
-      { title: 'Carruseles', href: '/carousels', icon: Images },
-    ],
-  },
-  {
-    title: 'Configuración',
-    items: [
-      { title: 'Apariencia', href: '/storefront', icon: Palette },
-    ],
-  },
-  {
-    title: 'Contenido',
-    items: [
-      { title: 'Preguntas Frecuentes', href: '/content/faq', icon: HelpCircle },
-      { title: 'Términos y Condiciones', href: '/content/terms', icon: FileText },
-    ],
-  },
-  {
-    title: 'Herramientas',
-    items: [
-      { title: 'Importar CSV', href: '/tools/import-csv', icon: Wrench },
-      { title: 'Convertir DBF', href: '/tools/import-dbf', icon: Wrench },
-      { title: 'Imágenes Masivas', href: '/tools/bulk-images', icon: Wrench },
-    ],
-  },
-];
+import { navigation } from './navigation';
 
 export function Header() {
   const { user, logout } = useAuth();

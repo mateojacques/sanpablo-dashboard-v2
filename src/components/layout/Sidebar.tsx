@@ -1,67 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Package,
-  FolderTree,
-  Images,
-  Palette,
-  HelpCircle,
-  FileText,
-  Wrench,
-  FileSpreadsheet,
-  Database,
-  ImagePlus,
-  ShoppingCart,
-} from 'lucide-react';
+import { Package } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 
-type NavItem = {
-  title: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-};
-
-type NavSection = {
-  title: string;
-  items: NavItem[];
-};
-
-const navigation: NavSection[] = [
-  {
-    title: 'Principal',
-    items: [
-      { title: 'Dashboard', href: '/', icon: LayoutDashboard },
-      { title: 'Productos', href: '/products', icon: Package },
-      { title: 'Categorías', href: '/categories', icon: FolderTree },
-      { title: 'Carruseles', href: '/carousels', icon: Images },
-      { title: 'Ordenes', href: '/orders', icon: ShoppingCart },
-    ],
-  },
-  {
-    title: 'Configuración',
-    items: [
-      { title: 'Apariencia', href: '/storefront', icon: Palette },
-    ],
-  },
-  {
-    title: 'Contenido',
-    items: [
-      { title: 'Preguntas Frecuentes', href: '/content/faq', icon: HelpCircle },
-      { title: 'Términos y Condiciones', href: '/content/terms', icon: FileText },
-    ],
-  },
-  {
-    title: 'Herramientas',
-    items: [
-      { title: 'Herramientas', href: '/herramientas', icon: Wrench },
-      { title: 'Importar CSV', href: '/herramientas/importaciones', icon: FileSpreadsheet },
-      { title: 'Convertir DBF', href: '/herramientas/convertir-dbf', icon: Database },
-      { title: 'Actualizar Imágenes', href: '/herramientas/imagenes', icon: ImagePlus },
-    ],
-  },
-];
+import { navigation } from './navigation';
 
 export function Sidebar() {
   const location = useLocation();
