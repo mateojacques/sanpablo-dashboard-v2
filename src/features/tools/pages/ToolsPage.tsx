@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom';
-import { FileSpreadsheet, Upload, Database, ImagePlus } from 'lucide-react';
+import { FileSpreadsheet, Upload, Database, ImagePlus, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageContainer } from '@/components/layout/PageContainer';
 
 const tools = [
+  {
+    title: 'Importacion en 1 Click',
+    description: 'Importa productos desde un archivo DBF automaticamente. Sin pasos intermedios.',
+    icon: Zap,
+    href: '/herramientas/importacion-1-click',
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-100',
+    featured: true,
+  },
   {
     title: 'Importar Productos (CSV)',
     description: 'Importa o actualiza productos masivamente desde un archivo CSV.',
@@ -30,8 +39,8 @@ const tools = [
     bgColor: 'bg-purple-100',
   },
   {
-    title: 'Actualización Masiva de Imágenes',
-    description: 'Actualiza imágenes de productos masivamente desde un archivo JSON.',
+    title: 'Actualizacion Masiva de Imagenes',
+    description: 'Actualiza imagenes de productos masivamente desde un archivo JSON.',
     icon: ImagePlus,
     href: '/herramientas/imagenes',
     color: 'text-orange-600',
@@ -47,13 +56,27 @@ export function ToolsPage() {
     >
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {tools.map((tool) => (
-          <Card key={tool.href} className="hover:shadow-md transition-shadow">
+          <Card
+            key={tool.href}
+            className={`hover:shadow-md transition-shadow ${
+              'featured' in tool && tool.featured
+                ? 'ring-2 ring-yellow-400 ring-offset-2'
+                : ''
+            }`}
+          >
             <CardHeader>
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${tool.bgColor}`}>
                   <tool.icon className={`h-6 w-6 ${tool.color}`} />
                 </div>
-                <CardTitle className="text-lg">{tool.title}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">{tool.title}</CardTitle>
+                  {'featured' in tool && tool.featured && (
+                    <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
+                      Nuevo
+                    </span>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

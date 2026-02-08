@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LogOut, User, Menu, Package, LayoutDashboard, FolderTree, Images, Palette, HelpCircle, FileText, Phone, Wrench } from 'lucide-react';
+import { LogOut, User, Menu, Package, LayoutDashboard, FolderTree, Images, Palette, HelpCircle, FileText, Wrench } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import {

@@ -23,3 +23,10 @@ export const termsSchema = z.object({
 });
 
 export type TermsFormData = z.infer<typeof termsSchema>;
+
+// Legal terms markdown schema (allows empty string)
+export const legalTermsSchema = z.object({
+  termsMarkdown: z.string().max(100000, 'El contenido es demasiado largo'),
+});
+
+export type LegalTermsFormData = z.infer<typeof legalTermsSchema>;

@@ -5,16 +5,21 @@
 export type DbfRecord = Record<string, unknown>;
 
 // Messages sent TO the worker
-export type DbfWorkerMessage = {
-  type: 'parse';
-  buffer: ArrayBuffer;
-};
+export type DbfWorkerMessage =
+  | {
+      type: 'parse';
+      buffer: ArrayBuffer;
+    }
+  | {
+      type: 'parse-api-format';
+      buffer: ArrayBuffer;
+    };
 
 // Messages sent FROM the worker
 export type DbfWorkerResponse =
   | {
       type: 'progress';
-      phase: 'parsing' | 'converting';
+      phase: 'parsing' | 'converting' | 'mapping';
       percent: number;
     }
   | {
@@ -25,6 +30,12 @@ export type DbfWorkerResponse =
     }
   | {
       type: 'complete';
+      csvBlob: Blob;
+      recordCount: number;
+      fields: string[];
+    }
+  | {
+      type: 'api-format-complete';
       csvBlob: Blob;
       recordCount: number;
       fields: string[];
@@ -46,6 +57,6 @@ export type ParsedDbfData = {
 // Processing state
 export type ProcessingState = {
   isProcessing: boolean;
-  phase: 'idle' | 'parsing' | 'converting' | 'done';
+  phase: 'idle' | 'parsing' | 'converting' | 'mapping' | 'uploading' | 'done';
   percent: number;
 };

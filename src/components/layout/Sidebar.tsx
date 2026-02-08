@@ -8,7 +8,6 @@ import {
   HelpCircle,
   FileText,
   Wrench,
-  Phone,
   FileSpreadsheet,
   Database,
   ImagePlus,

@@ -14,6 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -23,9 +29,14 @@ import {
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EmptyState } from '@/components/common/EmptyState';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { useDeleteOrder } from '../api/orders.queries';
-import type { Order } from '../types';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_VARIANTS } from '../types';
+import { useDeleteOrder, useUpdateOrderStatus } from '../api/orders.queries';
+import {
+  ORDER_STATUSES,
+  ORDER_STATUS_LABELS,
+  ORDER_STATUS_VARIANTS,
+  type Order,
+  type OrderStatus,
+} from '../types';
 
 type OrdersTableProps = {
   orders: Order[];
@@ -38,8 +49,10 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
     open: false,
     order: null,
   });
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const deleteOrder = useDeleteOrder();
+  const updateStatus = useUpdateOrderStatus();
 
   const handleDelete = async () => {
     if (!deleteDialog.order) return;
@@ -50,6 +63,23 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
       setDeleteDialog({ open: false, order: null });
     } catch {
       toast.error('Error al eliminar la orden');
+    }
+  };
+
+  const handleStatusChange = async (order: Order, newStatus: string) => {
+    if (newStatus === order.status) return;
+
+    try {
+      setUpdatingOrderId(order.id);
+      await updateStatus.mutateAsync({
+        id: order.id,
+        data: { status: newStatus as OrderStatus },
+      });
+      toast.success('Estado actualizado correctamente');
+    } catch {
+      toast.error('Error al actualizar el estado');
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -111,9 +141,27 @@ export function OrdersTable({ orders, isLoading }: OrdersTableProps) {
 
                 {/* Status */}
                 <TableCell className="text-center">
-                  <Badge variant={ORDER_STATUS_VARIANTS[order.status]}>
-                    {ORDER_STATUS_LABELS[order.status]}
-                  </Badge>
+                  <Select
+                    value={order.status}
+                    onValueChange={(value) => handleStatusChange(order, value)}
+                    disabled={updateStatus.isPending && updatingOrderId === order.id}
+                  >
+                    <SelectTrigger className="mx-auto h-7 w-fit border-0 bg-transparent p-0 shadow-none hover:bg-transparent focus:ring-0 [&>svg]:ml-1 [&>svg]:h-3.5 [&>svg]:w-3.5">
+                      <Badge
+                        variant={ORDER_STATUS_VARIANTS[order.status]}
+                        className="cursor-pointer"
+                      >
+                        {ORDER_STATUS_LABELS[order.status]}
+                      </Badge>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ORDER_STATUSES.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {ORDER_STATUS_LABELS[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </TableCell>
 
                 {/* Date */}

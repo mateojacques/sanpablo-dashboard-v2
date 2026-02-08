@@ -27,6 +27,7 @@ export const ROUTES = {
   TOOLS: '/tools',
   IMPORT_CSV: '/tools/import-csv',
   IMPORT_DBF: '/tools/import-dbf',
+  IMPORT_ONE_CLICK: '/herramientas/importacion-1-click',
   BULK_IMAGES: '/tools/bulk-images',
 } as const;
 

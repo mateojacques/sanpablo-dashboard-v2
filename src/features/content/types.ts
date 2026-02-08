@@ -1,5 +1,3 @@
-import type { Timestamps } from '@/types/common';
-
 // FAQ Item (matches API schema from storefront config)
 export type FaqItem = {
   id: string;
@@ -13,12 +11,11 @@ export type FaqResponse = {
   data: FaqItem[];
 };
 
-// Terms & Conditions
+// Terms & Conditions (storefront config legal)
 export type TermsContent = {
-  id: string;
-  content: string;
-  lastUpdatedBy: string | null;
-} & Timestamps;
+  termsMarkdown: string;
+  lastUpdated?: string;
+};
 
 export type TermsResponse = {
   data: TermsContent;
@@ -34,5 +31,5 @@ export type CreateFaqInput = {
 export type UpdateFaqInput = Partial<CreateFaqInput>;
 
 export type UpdateTermsInput = {
-  content: string;
+  termsMarkdown: string;
 };

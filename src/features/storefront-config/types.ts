@@ -66,6 +66,12 @@ export type SeoConfig = {
   ogImage: string | null;
 };
 
+// Legal configuration
+export type LegalConfig = {
+  termsMarkdown: string;
+  lastUpdated?: string;
+};
+
 // Complete storefront configuration (matches API schema)
 export type StorefrontConfig = {
   version: string;
@@ -76,6 +82,7 @@ export type StorefrontConfig = {
   faq: FaqItem[];
   contact: ContactConfig;
   seo: SeoConfig;
+  legal: LegalConfig;
 };
 
 // API Response type

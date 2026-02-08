@@ -40,6 +40,7 @@ import { CsvImportPage } from '@/features/tools/pages/CsvImportPage';
 import { ImportDetailPage } from '@/features/tools/pages/ImportDetailPage';
 import { DbfConvertPage } from '@/features/tools/pages/DbfConvertPage';
 import { BulkImagesPage } from '@/features/tools/pages/BulkImagesPage';
+import { OneClickImportPage } from '@/features/tools/pages/OneClickImportPage';
 
 // Order pages
 import { OrdersListPage } from '@/features/orders/pages/OrdersListPage';
@@ -114,6 +115,7 @@ export function AppRoutes() {
         
         {/* Tools */}
         <Route path="herramientas" element={<ToolsPage />} />
+        <Route path="herramientas/importacion-1-click" element={<OneClickImportPage />} />
         <Route path="herramientas/importaciones" element={<CsvImportPage />} />
         <Route path="herramientas/importaciones/nueva" element={<CsvImportPage />} />
         <Route path="herramientas/importaciones/:id" element={<ImportDetailPage />} />

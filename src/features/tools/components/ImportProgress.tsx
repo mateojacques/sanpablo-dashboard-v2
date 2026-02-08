@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { OneClickImportDebugPanel } from './OneClickImportDebugPanel';
 import { useImportJob, useCancelImportJob } from '../api/imports.queries';
 import type { ImportJobStatus } from '../types';
 
@@ -131,6 +132,8 @@ export function ImportProgress({ jobId }: ImportProgressProps) {
           Volver a importaciones
         </Link>
       </Button>
+
+      <OneClickImportDebugPanel jobId={jobId} />
 
       {/* Main card */}
       <Card>

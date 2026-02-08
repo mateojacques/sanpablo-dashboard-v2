@@ -16,16 +16,16 @@ import {
   FormDescription,
 } from '@/components/ui/form';
 import { useTerms, useUpdateTerms } from '../api/content.queries';
-import { termsSchema, type TermsFormData } from '@/lib/validations/content.schema';
+import { legalTermsSchema, type LegalTermsFormData } from '@/lib/validations/content.schema';
 
 export function TermsEditor() {
   const { data, isLoading } = useTerms();
   const updateTerms = useUpdateTerms();
 
-  const form = useForm<TermsFormData>({
-    resolver: zodResolver(termsSchema),
+  const form = useForm<LegalTermsFormData>({
+    resolver: zodResolver(legalTermsSchema),
     defaultValues: {
-      content: '',
+      termsMarkdown: '',
     },
   });
 
@@ -33,12 +33,12 @@ export function TermsEditor() {
   useEffect(() => {
     if (data?.data) {
       form.reset({
-        content: data.data.content ?? '',
+        termsMarkdown: data.data.termsMarkdown ?? '',
       });
     }
   }, [data, form]);
 
-  const handleSubmit = async (formData: TermsFormData) => {
+  const handleSubmit = async (formData: LegalTermsFormData) => {
     try {
       await updateTerms.mutateAsync(formData);
       toast.success('Términos y condiciones actualizados');
@@ -81,10 +81,10 @@ export function TermsEditor() {
               Define los términos y condiciones que los clientes deben aceptar.
             </CardDescription>
           </div>
-          {data?.data?.updatedAt && (
+          {data?.data?.lastUpdated && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Última actualización: {formatDate(data.data.updatedAt)}</span>
+              <span>Última actualización: {formatDate(data.data.lastUpdated)}</span>
             </div>
           )}
         </div>
@@ -94,7 +94,7 @@ export function TermsEditor() {
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="content"
+              name="termsMarkdown"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Contenido</FormLabel>

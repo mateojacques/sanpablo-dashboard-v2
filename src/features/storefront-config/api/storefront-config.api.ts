@@ -99,4 +99,10 @@ export const storefrontConfigApi = {
     const { data } = await api.patch('/api/storefront/config/seo', cleanedInput);
     return data;
   },
+
+  // Update legal section (admin)
+  updateLegal: async (input: { termsMarkdown: string }): Promise<StorefrontConfigResponse> => {
+    const { data } = await api.patch('/api/storefront/config/legal', input);
+    return data;
+  },
 };

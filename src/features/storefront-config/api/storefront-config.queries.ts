@@ -81,3 +81,15 @@ export function useUpdateSeo() {
     },
   });
 }
+
+// Update legal mutation
+export function useUpdateLegal() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (input: { termsMarkdown: string }) => storefrontConfigApi.updateLegal(input),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: storefrontConfigKeys.config() });
+    },
+  });
+}

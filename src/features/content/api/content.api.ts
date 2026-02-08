@@ -5,13 +5,7 @@ import type {
   UpdateTermsInput,
 } from '../types';
 
-// Response type for FAQ from storefront config
-type StorefrontConfigResponse = {
-  data: {
-    faq: FaqItem[];
-    [key: string]: unknown;
-  };
-};
+import type { StorefrontConfigResponse } from '@/features/storefront-config/types';
 
 export const contentApi = {
   // FAQ endpoints - FAQ is managed as part of storefront config
@@ -26,18 +20,24 @@ export const contentApi = {
     return { data: data.data.faq ?? [] };
   },
 
-  // Terms & Conditions endpoints
-  // Note: Terms may not be a separate endpoint in the API - check if it exists
-  // For now, keeping a placeholder that can be adjusted
+  // Terms & Conditions (legal)
   getTerms: async (): Promise<TermsResponse> => {
-    // Terms might be stored as a separate field or might not exist
-    // This is a placeholder - adjust based on actual API
-    const { data } = await api.get('/api/storefront/terms');
-    return data;
+    const { data } = await api.get<StorefrontConfigResponse>('/api/storefront/config');
+    return {
+      data: {
+        termsMarkdown: data.data.legal?.termsMarkdown ?? '',
+        lastUpdated: data.data.legal?.lastUpdated,
+      },
+    };
   },
 
   updateTerms: async (input: UpdateTermsInput): Promise<TermsResponse> => {
-    const { data } = await api.put('/api/storefront/terms', input);
-    return data;
+    const { data } = await api.patch<StorefrontConfigResponse>('/api/storefront/config/legal', input);
+    return {
+      data: {
+        termsMarkdown: data.data.legal?.termsMarkdown ?? '',
+        lastUpdated: data.data.legal?.lastUpdated,
+      },
+    };
   },
 };
