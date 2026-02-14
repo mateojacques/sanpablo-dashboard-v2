@@ -1,7 +1,5 @@
 import type { ComponentType } from 'react';
 import {
-  Database,
-  FileSpreadsheet,
   FolderTree,
   HelpCircle,
   ImagePlus,

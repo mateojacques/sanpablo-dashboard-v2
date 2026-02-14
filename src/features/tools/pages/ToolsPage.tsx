@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileSpreadsheet, Upload, Database, ImagePlus, Zap } from 'lucide-react';
+import { FileSpreadsheet, Database, ImagePlus, Zap } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageContainer } from '@/components/layout/PageContainer';
