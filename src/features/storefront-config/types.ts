@@ -17,7 +17,7 @@ export type ColorsConfig = {
   textMuted: string;
 };
 
-// Banner item (for hero and slim banners)
+// Banner item (for slim banners)
 export type BannerItem = {
   id?: string;
   imageUrl: string;
@@ -27,9 +27,22 @@ export type BannerItem = {
   sortOrder?: number;
 };
 
+// Hero banner item (extended with mobile image and CTA fields)
+export type HeroBannerItem = {
+  id?: string;
+  imageUrl: string;
+  mobileImageUrl?: string;
+  title?: string;
+  subtitle?: string;
+  ctaText?: string;
+  ctaLink?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+};
+
 // Banners configuration (matches API schema)
 export type BannersConfig = {
-  hero: BannerItem[];
+  hero: HeroBannerItem[];
   slim: BannerItem[];
 };
 

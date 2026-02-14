@@ -39,7 +39,7 @@ export const colorsSchema = z.object({
 
 export type ColorsFormData = z.infer<typeof colorsSchema>;
 
-// Single banner schema
+// Single banner schema (for slim banners)
 export const bannerItemSchema = z.object({
   imageUrl: z.string().url('URL de imagen inválida'),
   altText: z.string().max(200).optional().or(z.literal('')),
@@ -48,14 +48,31 @@ export const bannerItemSchema = z.object({
   sortOrder: z.number().min(0).optional(),
 });
 
+// Hero banner schema (extended with mobile image and CTA fields)
+export const heroBannerItemSchema = z.object({
+  imageUrl: z.string().url('URL de imagen desktop inválida'),
+  mobileImageUrl: z
+    .string()
+    .url('URL de imagen mobile inválida')
+    .optional()
+    .or(z.literal('')),
+  title: z.string().max(100, 'El título no puede tener más de 100 caracteres').optional().or(z.literal('')),
+  subtitle: z.string().max(200, 'El subtítulo no puede tener más de 200 caracteres').optional().or(z.literal('')),
+  ctaText: z.string().max(50, 'El texto del botón no puede tener más de 50 caracteres').optional().or(z.literal('')),
+  ctaLink: z.string().max(500, 'El enlace del botón es demasiado largo').optional().or(z.literal('')),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().min(0).optional(),
+});
+
 // Banners config schema (hero and slim banners)
 export const bannersSchema = z.object({
-  hero: z.array(bannerItemSchema),
+  hero: z.array(heroBannerItemSchema),
   slim: z.array(bannerItemSchema),
 });
 
 export type BannersFormData = z.infer<typeof bannersSchema>;
 export type BannerItemFormData = z.infer<typeof bannerItemSchema>;
+export type HeroBannerItemFormData = z.infer<typeof heroBannerItemSchema>;
 
 // Social links schema
 export const socialLinksSchema = z.object({
