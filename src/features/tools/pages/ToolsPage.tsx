@@ -15,20 +15,12 @@ const tools = [
     featured: true,
   },
   {
-    title: 'Importar Productos (CSV)',
-    description: 'Importa o actualiza productos masivamente desde un archivo CSV.',
-    icon: FileSpreadsheet,
-    href: '/herramientas/importaciones',
-    color: 'text-blue-600',
-    bgColor: 'bg-blue-100',
-  },
-  {
-    title: 'Nueva Importacion',
-    description: 'Sube un nuevo archivo CSV para importar productos.',
-    icon: Upload,
-    href: '/herramientas/importaciones/nueva',
-    color: 'text-green-600',
-    bgColor: 'bg-green-100',
+    title: 'Actualizacion Masiva de Imagenes',
+    description: 'Actualiza imagenes de productos masivamente desde un archivo JSON.',
+    icon: ImagePlus,
+    href: '/herramientas/imagenes',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-100',
   },
   {
     title: 'Convertir DBF a CSV',
@@ -39,12 +31,12 @@ const tools = [
     bgColor: 'bg-purple-100',
   },
   {
-    title: 'Actualizacion Masiva de Imagenes',
-    description: 'Actualiza imagenes de productos masivamente desde un archivo JSON.',
-    icon: ImagePlus,
-    href: '/herramientas/imagenes',
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-100',
+    title: 'Importar Productos (CSV)',
+    description: 'Importa o actualiza productos masivamente desde un archivo CSV.',
+    icon: FileSpreadsheet,
+    href: '/herramientas/importaciones',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-100',
   },
 ];
 
@@ -58,11 +50,8 @@ export function ToolsPage() {
         {tools.map((tool) => (
           <Card
             key={tool.href}
-            className={`hover:shadow-md transition-shadow ${
-              'featured' in tool && tool.featured
-                ? 'ring-2 ring-yellow-400 ring-offset-2'
-                : ''
-            }`}
+            className={`hover:shadow-md transition-shadow ${'featured' in tool && tool.featured ? 'ring-2 ring-yellow-400 ring-offset-2' : ''
+              }`}
           >
             <CardHeader>
               <div className="flex items-center gap-3">
