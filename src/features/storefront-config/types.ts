@@ -51,6 +51,7 @@ export type SocialLinks = {
   facebook?: string;
   instagram?: string;
   twitter?: string;
+  whatsapp?: string;
   youtube?: string;
   tiktok?: string;
 };

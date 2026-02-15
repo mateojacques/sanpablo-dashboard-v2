@@ -38,6 +38,7 @@ export function ContactForm({ initialData }: ContactFormProps) {
         facebook: initialData.socialLinks?.facebook ?? '',
         instagram: initialData.socialLinks?.instagram ?? '',
         twitter: initialData.socialLinks?.twitter ?? '',
+        whatsapp: initialData.socialLinks?.whatsapp ?? '',
         youtube: initialData.socialLinks?.youtube ?? '',
         tiktok: initialData.socialLinks?.tiktok ?? '',
       },
@@ -219,6 +220,25 @@ export function ContactForm({ initialData }: ContactFormProps) {
                         <Input
                           type="url"
                           placeholder="https://twitter.com/mitienda"
+                          {...field}
+                          value={field.value ?? ''}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="socialLinks.whatsapp"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Canal de WhatsApp</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="url"
+                          placeholder="https://whatsapp.com/channel/..."
                           {...field}
                           value={field.value ?? ''}
                         />

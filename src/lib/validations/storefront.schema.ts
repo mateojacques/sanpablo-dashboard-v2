@@ -79,6 +79,7 @@ export const socialLinksSchema = z.object({
   facebook: urlSchema,
   instagram: urlSchema,
   twitter: urlSchema,
+  whatsapp: urlSchema,
   youtube: urlSchema,
   tiktok: urlSchema,
 });
@@ -124,6 +125,7 @@ export function transformContactData(data: ContactFormData) {
       facebook: data.socialLinks.facebook || undefined,
       instagram: data.socialLinks.instagram || undefined,
       twitter: data.socialLinks.twitter || undefined,
+      whatsapp: data.socialLinks.whatsapp || undefined,
       youtube: data.socialLinks.youtube || undefined,
       tiktok: data.socialLinks.tiktok || undefined,
     } : null,
