@@ -1,5 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
+import Papa from 'papaparse';
 import {
   FileSpreadsheet,
   Upload,
@@ -22,17 +23,26 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
-import type {
-  DbfWorkerResponse,
-  ParsedDbfData,
-  ProcessingState,
-} from '../workers/dbf.types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { cn, downloadBlob } from '@/lib/utils';
+import { getDbfErrorMessage, type DbfCsvFormat } from '../api/imports.api';
+import { useConvertDbfToCsv } from '../api/imports.queries';
 
-// Import worker using Vite's worker syntax
-import DbfWorker from '../workers/dbf.worker?worker';
+type ConvertedCsv = {
+  blob: Blob;
+  rowCount: number;
+  format: DbfCsvFormat;
+  headers: string[];
+  preview: string[][];
+};
 
 function formatFileSize(bytes: number): string {
   if (bytes === 0) return '0 B';
@@ -48,25 +58,12 @@ function formatNumber(num: number): string {
 
 export function DbfConverter() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [parsedData, setParsedData] = useState<ParsedDbfData | null>(null);
+  const [format, setFormat] = useState<DbfCsvFormat>('api');
+  const [result, setResult] = useState<ConvertedCsv | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [processing, setProcessing] = useState<ProcessingState>({
-    isProcessing: false,
-    phase: 'idle',
-    percent: 0,
-  });
 
-  const workerRef = useRef<Worker | null>(null);
-
-  // Cleanup worker on unmount
-  useEffect(() => {
-    return () => {
-      if (workerRef.current) {
-        workerRef.current.terminate();
-        workerRef.current = null;
-      }
-    };
-  }, []);
+  const convert = useConvertDbfToCsv();
+  const isProcessing = convert.isPending;
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0];
@@ -76,15 +73,14 @@ export function DbfConverter() {
         toast.error('Solo se permiten archivos DBF');
         return;
       }
-      // Validate file size (max 100MB for DBF - increased from 50MB)
+      // Validate file size (max 100MB)
       if (file.size > 100 * 1024 * 1024) {
         toast.error('El archivo no puede superar los 100MB');
         return;
       }
       setSelectedFile(file);
-      setParsedData(null);
+      setResult(null);
       setError(null);
-      setProcessing({ isProcessing: false, phase: 'idle', percent: 0 });
     }
   }, []);
 
@@ -96,139 +92,55 @@ export function DbfConverter() {
       'application/octet-stream': ['.dbf'],
     },
     maxFiles: 1,
-    disabled: processing.isProcessing,
+    disabled: isProcessing,
   });
 
   const handleClearFile = () => {
-    // Terminate any running worker
-    if (workerRef.current) {
-      workerRef.current.terminate();
-      workerRef.current = null;
-    }
     setSelectedFile(null);
-    setParsedData(null);
+    setResult(null);
     setError(null);
-    setProcessing({ isProcessing: false, phase: 'idle', percent: 0 });
+  };
+
+  const handleFormatChange = (value: string) => {
+    setFormat(value as DbfCsvFormat);
+    // A result in the other format no longer matches the selection
+    setResult(null);
   };
 
   const handleParse = async () => {
     if (!selectedFile) return;
 
-    setProcessing({ isProcessing: true, phase: 'parsing', percent: 0 });
     setError(null);
-    setParsedData(null);
+    setResult(null);
 
     try {
-      // Read file as ArrayBuffer
-      const arrayBuffer = await selectedFile.arrayBuffer();
+      const { blob, rowCount } = await convert.mutateAsync({ file: selectedFile, format });
 
-      // Create worker
-      const worker = new DbfWorker();
-      workerRef.current = worker;
+      // Preview from the first ~64KB: row 0 is the header, then up to 10 rows
+      const text = await blob.slice(0, 64 * 1024).text();
+      const parsed = Papa.parse<string[]>(text, { preview: 11 });
+      const [headers = [], ...preview] = parsed.data;
 
-      // Handle worker messages
-      worker.onmessage = (event: MessageEvent<DbfWorkerResponse>) => {
-        const response = event.data;
-
-        switch (response.type) {
-          case 'progress':
-            setProcessing({
-              isProcessing: true,
-              phase: response.phase,
-              percent: response.percent,
-            });
-            break;
-
-          case 'preview':
-            // Update with preview data immediately
-            setParsedData((prev) => ({
-              filename: selectedFile.name,
-              fields: response.fields,
-              preview: response.preview,
-              recordCount: response.recordCount,
-              csvBlob: prev?.csvBlob ?? null,
-            }));
-            break;
-
-          case 'complete':
-            setParsedData({
-              filename: selectedFile.name,
-              fields: response.fields,
-              preview: parsedData?.preview ?? [],
-              recordCount: response.recordCount,
-              csvBlob: response.csvBlob,
-            });
-            setProcessing({ isProcessing: false, phase: 'done', percent: 100 });
-            toast.success(
-              `Archivo procesado: ${formatNumber(response.recordCount)} registros convertidos`
-            );
-
-            // Cleanup worker
-            worker.terminate();
-            workerRef.current = null;
-            break;
-
-          case 'error':
-            setError(response.message);
-            setProcessing({ isProcessing: false, phase: 'idle', percent: 0 });
-            toast.error(response.message);
-
-            // Cleanup worker
-            worker.terminate();
-            workerRef.current = null;
-            break;
-        }
-      };
-
-      worker.onerror = (err) => {
-        const message = 'Error en el procesamiento del archivo';
-        setError(message);
-        setProcessing({ isProcessing: false, phase: 'idle', percent: 0 });
-        toast.error(message);
-        console.error('Worker error:', err);
-
-        // Cleanup worker
-        worker.terminate();
-        workerRef.current = null;
-      };
-
-      // Send file to worker
-      worker.postMessage({ type: 'parse', buffer: arrayBuffer });
+      setResult({ blob, rowCount, format, headers, preview });
+      toast.success(`Archivo procesado: ${formatNumber(rowCount)} registros convertidos`);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Error al leer el archivo';
+      const message = getDbfErrorMessage(err, 'Error al procesar el archivo');
       setError(message);
-      setProcessing({ isProcessing: false, phase: 'idle', percent: 0 });
       toast.error(message);
     }
   };
 
   const handleDownloadCsv = () => {
-    if (!parsedData?.csvBlob) return;
+    if (!selectedFile || !result) return;
 
-    const url = window.URL.createObjectURL(parsedData.csvBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = parsedData.filename.replace(/\.dbf$/i, '.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
+    downloadBlob(
+      result.blob,
+      selectedFile.name.replace(
+        /\.dbf$/i,
+        result.format === 'raw' ? '-completo.csv' : '.csv'
+      )
+    );
     toast.success('Archivo CSV descargado');
-  };
-
-  const getPhaseLabel = () => {
-    switch (processing.phase) {
-      case 'parsing':
-        return 'Leyendo archivo DBF...';
-      case 'converting':
-        return 'Convirtiendo a CSV...';
-      case 'done':
-        return 'Completado';
-      default:
-        return '';
-    }
   };
 
   return (
@@ -255,7 +167,7 @@ export function DbfConverter() {
                 isDragActive
                   ? 'border-primary bg-primary/5'
                   : 'border-muted-foreground/25 hover:border-primary/50',
-                processing.isProcessing && 'pointer-events-none opacity-50'
+                isProcessing && 'pointer-events-none opacity-50'
               )}
             >
               <input {...getInputProps()} />
@@ -291,7 +203,7 @@ export function DbfConverter() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {processing.phase === 'done' && (
+                  {result && (
                     <Badge variant="outline" className="gap-1 text-green-600">
                       <Check className="h-3 w-3" />
                       Procesado
@@ -307,7 +219,7 @@ export function DbfConverter() {
                     variant="ghost"
                     size="icon"
                     onClick={handleClearFile}
-                    disabled={processing.isProcessing}
+                    disabled={isProcessing}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -316,29 +228,36 @@ export function DbfConverter() {
             </div>
           )}
 
-          {/* Progress bar */}
-          {processing.isProcessing && (
+          {/* Output format */}
+          {selectedFile && (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{getPhaseLabel()}</span>
-                <span className="font-medium">{processing.percent}%</span>
-              </div>
-              <Progress value={processing.percent} className="h-2" />
+              <Label htmlFor="dbf-format">Formato de salida</Label>
+              <Select value={format} onValueChange={handleFormatChange} disabled={isProcessing}>
+                <SelectTrigger id="dbf-format" className="w-full sm:w-80">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="api">Formato de importación</SelectItem>
+                  <SelectItem value="raw">Todas las columnas del DBF</SelectItem>
+                </SelectContent>
+              </Select>
+              {format === 'raw' && (
+                <p className="text-sm text-muted-foreground">
+                  Útil para revisar si cambió la estructura del archivo
+                </p>
+              )}
             </div>
           )}
 
           {/* Action buttons */}
           {selectedFile && (
             <div className="flex justify-end gap-2">
-              {processing.phase !== 'done' && (
-                <Button
-                  onClick={handleParse}
-                  disabled={processing.isProcessing}
-                >
-                  {processing.isProcessing ? (
+              {!result && (
+                <Button onClick={handleParse} disabled={isProcessing}>
+                  {isProcessing ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Procesando...
+                      Procesando en el servidor...
                     </>
                   ) : (
                     <>
@@ -348,7 +267,7 @@ export function DbfConverter() {
                   )}
                 </Button>
               )}
-              {processing.phase === 'done' && parsedData?.csvBlob && (
+              {result && (
                 <Button onClick={handleDownloadCsv}>
                   <Download className="mr-2 h-4 w-4" />
                   Descargar CSV
@@ -368,7 +287,7 @@ export function DbfConverter() {
       </Card>
 
       {/* Preview Card */}
-      {parsedData && parsedData.preview.length > 0 && (
+      {result && result.headers.length > 0 && (
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -378,16 +297,16 @@ export function DbfConverter() {
                   Vista previa
                 </CardTitle>
                 <CardDescription>
-                  Mostrando {parsedData.preview.length} de{' '}
-                  {formatNumber(parsedData.recordCount)} registros
+                  Mostrando {result.preview.length} de{' '}
+                  {formatNumber(result.rowCount)} registros
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">
-                  {parsedData.fields.length} columnas
+                  {result.headers.length} columnas
                 </Badge>
                 <Badge variant="secondary">
-                  {formatNumber(parsedData.recordCount)} filas
+                  {formatNumber(result.rowCount)} filas
                 </Badge>
               </div>
             </div>
@@ -398,25 +317,25 @@ export function DbfConverter() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-12 text-center">#</TableHead>
-                    {parsedData.fields.map((field) => (
-                      <TableHead key={field} className="min-w-[120px]">
-                        {field}
+                    {result.headers.map((header, col) => (
+                      <TableHead key={col} className="min-w-[120px]">
+                        {header}
                       </TableHead>
                     ))}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {parsedData.preview.map((record, index) => (
+                  {result.preview.map((row, index) => (
                     <TableRow key={index}>
                       <TableCell className="text-center text-muted-foreground">
                         {index + 1}
                       </TableCell>
-                      {parsedData.fields.map((field) => (
+                      {result.headers.map((_, col) => (
                         <TableCell
-                          key={field}
+                          key={col}
                           className="max-w-[200px] truncate"
                         >
-                          {String(record[field] ?? '')}
+                          {row[col] ?? ''}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -426,9 +345,9 @@ export function DbfConverter() {
               <ScrollBar orientation="horizontal" />
             </ScrollArea>
 
-            {parsedData.recordCount > 10 && (
+            {result.rowCount > result.preview.length && (
               <p className="text-sm text-muted-foreground mt-4 text-center">
-                ... y {formatNumber(parsedData.recordCount - 10)} registros mas
+                ... y {formatNumber(result.rowCount - result.preview.length)} registros mas
               </p>
             )}
           </CardContent>
@@ -444,11 +363,7 @@ export function DbfConverter() {
           <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
             <li>Sube un archivo DBF exportado desde tu sistema de inventario</li>
             <li>
-              El archivo sera procesado localmente (no se sube a ningun servidor)
-            </li>
-            <li>
-              Archivos grandes (10,000+ registros) se procesan en segundo plano
-              sin bloquear la pantalla
+              El archivo se procesa en el servidor con las mismas reglas que la importación
             </li>
             <li>
               Revisa la vista previa para verificar que los datos se leen
