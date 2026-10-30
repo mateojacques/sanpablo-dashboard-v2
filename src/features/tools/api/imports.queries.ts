@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { importsApi } from './imports.api';
+import { downloadBlob } from '@/lib/utils';
+import { importsApi, type DbfCsvFormat } from './imports.api';
 import type { ImportJobsParams, ImportJobResponse } from '../types';
 
 // Query keys
@@ -49,6 +50,32 @@ export function useCreateImportJob() {
   });
 }
 
+// Create an import job from a DBF file
+export function useCreateDbfImportJob() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      file,
+      onUploadProgress,
+    }: {
+      file: File;
+      onUploadProgress?: (percent: number) => void;
+    }) => importsApi.createFromDbf(file, onUploadProgress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: importKeys.lists() });
+    },
+  });
+}
+
+// Convert a DBF file to CSV on the server
+export function useConvertDbfToCsv() {
+  return useMutation({
+    mutationFn: ({ file, format }: { file: File; format: DbfCsvFormat }) =>
+      importsApi.convertDbfToCsv(file, format),
+  });
+}
+
 // Cancel an import job
 export function useCancelImportJob() {
   const queryClient = useQueryClient();
@@ -67,15 +94,7 @@ export function useDownloadTemplate() {
   return useMutation({
     mutationFn: async () => {
       const blob = await importsApi.getTemplate();
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'productos-template.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      downloadBlob(blob, 'productos-template.csv');
     },
   });
 }

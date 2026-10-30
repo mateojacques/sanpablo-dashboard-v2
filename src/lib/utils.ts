@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -47,4 +48,35 @@ export function slugify(text: string): string {
 export function truncate(text: string, length: number): string {
   if (text.length <= length) return text;
   return text.slice(0, length) + '...';
+}
+
+// Trigger a browser download for an in-memory file
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+}
+
+// Read the API's `{ error: { code, message, details } }` body from an axios error
+export function getApiErrorCode(error: unknown): {
+  code?: string;
+  message?: string;
+  details?: unknown;
+} {
+  if (axios.isAxiosError(error)) {
+    const apiError = error.response?.data?.error;
+    if (apiError && typeof apiError === 'object') {
+      return {
+        code: apiError.code,
+        message: apiError.message,
+        details: apiError.details,
+      };
+    }
+  }
+  return {};
 }
