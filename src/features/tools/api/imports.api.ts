@@ -1,5 +1,5 @@
 import { api } from '@/lib/axios';
-import { getApiErrorCode } from '@/lib/utils';
+import { getApiErrorCode, normalizeBlobErrorBody } from '@/lib/utils';
 import type {
   ImportJobResponse,
   ImportJobsResponse,
@@ -84,13 +84,18 @@ export const importsApi = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post('/api/imports/dbf/csv', formData, {
-      params: { format },
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-      responseType: 'blob',
-    });
+    const response = await api
+      .post('/api/imports/dbf/csv', formData, {
+        params: { format },
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        responseType: 'blob',
+      })
+      .catch(async (error) => {
+        await normalizeBlobErrorBody(error);
+        throw error;
+      });
     return {
       blob: response.data,
       rowCount: Number(response.headers['x-row-count'] ?? 0),
@@ -99,9 +104,14 @@ export const importsApi = {
 
   // Download the file an import job imported
   getFile: async (id: string): Promise<Blob> => {
-    const { data } = await api.get(`/api/imports/${id}/file`, {
-      responseType: 'blob',
-    });
+    const { data } = await api
+      .get(`/api/imports/${id}/file`, {
+        responseType: 'blob',
+      })
+      .catch(async (error) => {
+        await normalizeBlobErrorBody(error);
+        throw error;
+      });
     return data;
   },
 

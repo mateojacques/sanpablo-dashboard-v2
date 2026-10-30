@@ -62,6 +62,17 @@ export function downloadBlob(blob: Blob, filename: string): void {
   window.URL.revokeObjectURL(url);
 }
 
+// Requests made with responseType 'blob' get their error body as a Blob too.
+// Parse it back into JSON so getApiErrorCode can read it.
+export async function normalizeBlobErrorBody(error: unknown): Promise<void> {
+  if (!axios.isAxiosError(error) || !(error.response?.data instanceof Blob)) return;
+  try {
+    error.response.data = JSON.parse(await error.response.data.text());
+  } catch {
+    // Not a JSON body; leave it as is
+  }
+}
+
 // Read the API's `{ error: { code, message, details } }` body from an axios error
 export function getApiErrorCode(error: unknown): {
   code?: string;
