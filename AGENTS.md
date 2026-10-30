@@ -38,7 +38,6 @@ The dashboard consumes a REST API documented at `http://localhost:3000/api/docs`
 | Notifications | Sonner | 1.7+ |
 | File Drop | react-dropzone | 14.x |
 | CSV Parsing | PapaParse | 5.4+ |
-| DBF Parsing | shapefile | 0.6 |
 | Dates | date-fns | 4.x |
 | Linting | ESLint (flat config) + typescript-eslint | 9.x |
 
@@ -133,9 +132,6 @@ sanpablo-dashboard-v2/
 │   │       │                       # ImportProgress, ImportJobsTable
 │   │       ├── pages/              # ToolsPage, OneClickImportPage, CsvImportPage,
 │   │       │                       # ImportDetailPage, DbfConvertPage, BulkImagesPage
-│   │       ├── stores/             # oneClickImportDebug.store.ts
-│   │       ├── workers/            # dbf.worker.ts (Web Worker), dbf.types.ts
-│   │       ├── import-products/    # dbf-to-csv-parser.py + example.csv (reference format)
 │   │       └── types.ts
 │   │
 │   ├── lib/
@@ -722,13 +718,19 @@ The `content` feature (FAQ / Terms pages) reads and writes through these same en
 | POST | `/api/imports/:id/cancel` | Cancel job |
 | GET | `/api/imports/template` | Download CSV template (blob) |
 | POST | `/api/imports/bulk-images` | Bulk image update (multipart JSON `file`) |
+| POST | `/api/imports/dbf` | Create import job from a DBF (multipart `file`, max 100MB) → `{ data: ImportJob }` |
+| POST | `/api/imports/dbf/csv?format=api\|raw` | Convert a DBF to CSV without importing (blob; row count in `X-Row-Count`) |
+| GET | `/api/imports/:id/file` | Download the file a job imported (blob) |
 
 ---
 
 ## Import Tools
 
-- **1-click import** (`OneClickImporter.tsx`): the user drops a Visual FoxPro `.dbf` (max 100MB). The file is parsed in a Web Worker (`workers/dbf.worker.ts`, loaded via Vite's `import DbfWorker from '../workers/dbf.worker?worker'`) using the `shapefile` library with windows-1252 encoding, mapped to the API CSV columns, and uploaded to `POST /api/imports`. Progress is shown by polling the job.
-- The worker's column mapping mirrors `features/tools/import-products/dbf-to-csv-parser.py`; `example.csv` in the same folder is the reference CSV format. Keep them in sync.
+- **This repo does no DBF parsing.** All DBF knowledge (reader, field mapping, CSV format) lives in `sanpablo-api-v2/src/modules/imports/dbf/`.
+- **1-click import** (`OneClickImporter.tsx`): the user drops a Visual FoxPro `.dbf` (max 100MB, extension checked case-insensitively) and it is uploaded as-is to `POST /api/imports/dbf`, which converts it and creates a CSV import job. Progress is shown by polling the job.
+- **DBF converter** (`DbfConverter.tsx`): calls `POST /api/imports/dbf/csv?format=api|raw` (`api` = import columns, `raw` = every DBF column) and previews the first rows with PapaParse.
+- **Imported file**: `GET /api/imports/:id/file` serves the exact file a job imported; `OneClickImportDebugPanel` ("Archivo importado", shown by `ImportProgress`) fetches it on demand.
+- DBF errors come back as `{ error: { code } }` (`INVALID_DBF`, `DBF_MISSING_FIELDS`, …); show them with `getDbfErrorMessage` from `api/imports.api.ts`.
 - **Bulk images** (`BulkImageUpdater.tsx`): uploads a JSON file to `POST /api/imports/bulk-images`; the default payload is imported from `src/product-images/*.json` and validated with `bulk-images.schema.ts`.
 
 ---
