@@ -3,11 +3,16 @@
 ## Project Overview
 
 Administrative dashboard for an art store/bookstore (San Pablo). This SPA provides management capabilities for:
-- **Brand customization**: logos, colors, banners, favicon
-- **Content management**: Terms & Conditions, FAQ
-- **Product carousels**: Featured product displays with ordering
-- **Bulk import tools**: CSV import, DBF conversion, bulk image updates
+- **Dashboard metrics**: sales/order overview with date range filtering
 - **Product management**: CRUD, search, filtering, manual editing
+- **Categories**: category tree with ordering
+- **Product carousels**: Featured product displays with ordering
+- **Orders**: order list, detail and status updates
+- **Brand customization**: logos, colors, banners (including hero banner), contact & social links, SEO
+- **Content management**: Terms & Conditions, FAQ
+- **Bulk import tools**: 1-click DBF import, CSV import, DBF conversion, bulk image updates
+
+The UI is in Spanish (labels, toasts, validation messages); numbers are formatted with the `es-AR` locale.
 
 The dashboard consumes a REST API documented at `http://localhost:3000/api/docs`.
 
@@ -17,21 +22,27 @@ The dashboard consumes a REST API documented at `http://localhost:3000/api/docs`
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Bundler | Vite | 5.4+ |
+| Bundler | Vite | 6.x |
 | Framework | React | 18.3+ |
-| Language | TypeScript | 5.6+ |
-| Routing | React Router | 7.x |
-| UI Components | shadcn/ui | latest |
+| Language | TypeScript | 5.6 |
+| Routing | React Router (`react-router-dom`) | 7.x |
+| UI Components | shadcn/ui (Radix) | latest |
 | Styling | Tailwind CSS | 3.4+ |
 | Server State | TanStack Query | 5.x |
-| Client State | Zustand | 4.5+ |
+| Client State | Zustand | 5.x |
 | Forms | React Hook Form | 7.x |
-| Validation | Zod | 3.23+ |
+| Validation | Zod | 3.x |
 | HTTP Client | Axios | 1.7+ |
-| Icons | Lucide React | 0.454+ |
-| Drag & Drop | @dnd-kit | 6.x |
-| Notifications | Sonner | 1.5+ |
+| Icons | Lucide React | 0.469+ |
+| Drag & Drop | @dnd-kit | core 6.x / sortable 10.x |
+| Notifications | Sonner | 1.7+ |
+| File Drop | react-dropzone | 14.x |
 | CSV Parsing | PapaParse | 5.4+ |
+| DBF Parsing | shapefile | 0.6 |
+| Dates | date-fns | 4.x |
+| Linting | ESLint (flat config) + typescript-eslint | 9.x |
+
+There is no test runner configured.
 
 ---
 
@@ -40,143 +51,111 @@ The dashboard consumes a REST API documented at `http://localhost:3000/api/docs`
 ```
 sanpablo-dashboard-v2/
 ├── public/
-│   └── favicon.ico
+│   ├── favicon.svg
+│   └── _redirects                  # SPA fallback: /* -> /index.html 200
 ├── src/
 │   ├── app/
 │   │   ├── App.tsx                 # Root component
-│   │   ├── providers.tsx           # All providers (Query, Router)
-│   │   └── routes.tsx              # Route definitions
+│   │   ├── providers.tsx           # QueryClient, Router, Tooltip, Toaster
+│   │   └── routes.tsx              # Route definitions + Protected/Public route guards
 │   │
 │   ├── components/
 │   │   ├── ui/                     # shadcn/ui components (auto-generated)
-│   │   │   ├── button.tsx
-│   │   │   ├── input.tsx
-│   │   │   ├── dialog.tsx
-│   │   │   └── ...
 │   │   ├── layout/
 │   │   │   ├── MainLayout.tsx      # Main app layout
-│   │   │   ├── Sidebar.tsx         # Navigation sidebar
+│   │   │   ├── Sidebar.tsx         # Navigation sidebar (renders navigation.ts)
+│   │   │   ├── navigation.ts       # Sidebar sections and items
 │   │   │   ├── Header.tsx          # Top header bar
-│   │   │   └── PageContainer.tsx   # Page wrapper with title
+│   │   │   └── PageContainer.tsx   # Page wrapper with title/description/action
 │   │   └── common/
-│   │       ├── DataTable.tsx       # Reusable data table
+│   │       ├── Breadcrumbs.tsx
 │   │       ├── ConfirmDialog.tsx   # Confirmation modal
-│   │       ├── FileUpload.tsx      # File upload component
-│   │       ├── ColorPicker.tsx     # Color selection
 │   │       ├── EmptyState.tsx      # Empty data state
-│   │       └── LoadingSpinner.tsx  # Loading indicator
+│   │       ├── LoadingSpinner.tsx  # Loading indicator
+│   │       ├── NotFoundPage.tsx    # 404 page
+│   │       └── Pagination.tsx      # Page + page-size controls
 │   │
 │   ├── features/
 │   │   ├── auth/
-│   │   │   ├── api/
-│   │   │   │   ├── auth.api.ts     # API functions
-│   │   │   │   └── auth.queries.ts # TanStack Query hooks
-│   │   │   ├── components/
-│   │   │   │   └── LoginForm.tsx
-│   │   │   ├── pages/
-│   │   │   │   └── LoginPage.tsx
-│   │   │   ├── store.ts            # Zustand auth store
+│   │   │   ├── api/                # auth.api.ts, auth.queries.ts
+│   │   │   ├── pages/LoginPage.tsx
+│   │   │   ├── store.ts            # Zustand auth store (persisted)
+│   │   │   └── types.ts
+│   │   │
+│   │   ├── dashboard/
+│   │   │   ├── api/                # metrics.api.ts, metrics.queries.ts
+│   │   │   ├── components/         # MetricCard, DateRangeFilter
+│   │   │   ├── pages/DashboardPage.tsx
 │   │   │   └── types.ts
 │   │   │
 │   │   ├── products/
-│   │   │   ├── api/
-│   │   │   │   ├── products.api.ts
-│   │   │   │   └── products.queries.ts
-│   │   │   ├── components/
-│   │   │   │   ├── ProductsTable.tsx
-│   │   │   │   ├── ProductForm.tsx
-│   │   │   │   ├── ProductFilters.tsx
-│   │   │   │   └── ProductCard.tsx
-│   │   │   ├── pages/
-│   │   │   │   ├── ProductsListPage.tsx
-│   │   │   │   ├── ProductDetailPage.tsx
-│   │   │   │   ├── ProductCreatePage.tsx
-│   │   │   │   └── ProductEditPage.tsx
+│   │   │   ├── api/                # products.api.ts, products.queries.ts
+│   │   │   ├── components/         # ProductsTable, ProductForm, ProductFilters
+│   │   │   ├── pages/              # ProductsList, ProductDetail, ProductCreate, ProductEdit
 │   │   │   └── types.ts
 │   │   │
 │   │   ├── categories/
 │   │   │   ├── api/
-│   │   │   ├── components/
-│   │   │   │   ├── CategoryTree.tsx
-│   │   │   │   └── CategoryForm.tsx
-│   │   │   ├── pages/
-│   │   │   │   └── CategoriesPage.tsx
+│   │   │   ├── components/         # CategoryTree, CategoryForm, CategoryDialog
+│   │   │   ├── pages/CategoriesPage.tsx
 │   │   │   └── types.ts
 │   │   │
 │   │   ├── carousels/
 │   │   │   ├── api/
-│   │   │   ├── components/
-│   │   │   │   ├── CarouselList.tsx
-│   │   │   │   ├── CarouselForm.tsx
-│   │   │   │   ├── CarouselProducts.tsx
-│   │   │   │   └── ProductSelector.tsx
-│   │   │   ├── pages/
-│   │   │   │   ├── CarouselsPage.tsx
-│   │   │   │   └── CarouselEditPage.tsx
+│   │   │   ├── components/         # CarouselCard, CarouselDialog, CarouselForm,
+│   │   │   │                       # CarouselProducts, ProductSelector
+│   │   │   ├── pages/              # CarouselsPage, CarouselEditPage
+│   │   │   └── types.ts
+│   │   │
+│   │   ├── orders/
+│   │   │   ├── api/
+│   │   │   ├── components/         # OrdersTable, OrderFilters
+│   │   │   ├── pages/              # OrdersListPage, OrderDetailPage
 │   │   │   └── types.ts
 │   │   │
 │   │   ├── storefront-config/
 │   │   │   ├── api/
-│   │   │   ├── components/
-│   │   │   │   ├── BrandingForm.tsx
-│   │   │   │   ├── ColorPalette.tsx
-│   │   │   │   ├── BannerManager.tsx
-│   │   │   │   ├── LogoUploader.tsx
-│   │   │   │   └── SeoSettings.tsx
-│   │   │   ├── pages/
-│   │   │   │   └── StorefrontConfigPage.tsx
+│   │   │   ├── components/         # BrandingForm, ColorPalette, BannerManager,
+│   │   │   │                       # ContactForm, SeoSettings
+│   │   │   ├── pages/StorefrontConfigPage.tsx
 │   │   │   └── types.ts
 │   │   │
-│   │   ├── content/
+│   │   ├── content/                # FAQ & Terms (stored in storefront config)
 │   │   │   ├── api/
-│   │   │   ├── components/
-│   │   │   │   ├── FaqEditor.tsx
-│   │   │   │   ├── FaqItem.tsx
-│   │   │   │   ├── TermsEditor.tsx
-│   │   │   │   └── ContactForm.tsx
-│   │   │   ├── pages/
-│   │   │   │   ├── FaqPage.tsx
-│   │   │   │   ├── TermsPage.tsx
-│   │   │   │   └── ContactPage.tsx
+│   │   │   ├── components/         # FaqEditor, FaqItemDialog, TermsEditor
+│   │   │   ├── pages/              # FaqPage, TermsPage
 │   │   │   └── types.ts
 │   │   │
 │   │   └── tools/
-│   │       ├── api/
-│   │       │   ├── import.api.ts
-│   │       │   └── import.queries.ts
-│   │       ├── components/
-│   │       │   ├── CsvImporter.tsx
-│   │       │   ├── DbfConverter.tsx
-│   │       │   ├── BulkImageUpdater.tsx
-│   │       │   ├── ImportProgress.tsx
-│   │       │   ├── ColumnMapper.tsx
-│   │       │   └── ImportHistory.tsx
-│   │       ├── pages/
-│   │       │   ├── ToolsPage.tsx
-│   │       │   ├── CsvImportPage.tsx
-│   │       │   ├── DbfConvertPage.tsx
-│   │       │   └── BulkImagesPage.tsx
+│   │       ├── api/                # imports.api.ts, imports.queries.ts
+│   │       ├── components/         # OneClickImporter, OneClickImportDebugPanel,
+│   │       │                       # CsvImporter, DbfConverter, BulkImageUpdater,
+│   │       │                       # ImportProgress, ImportJobsTable
+│   │       ├── pages/              # ToolsPage, OneClickImportPage, CsvImportPage,
+│   │       │                       # ImportDetailPage, DbfConvertPage, BulkImagesPage
+│   │       ├── stores/             # oneClickImportDebug.store.ts
+│   │       ├── workers/            # dbf.worker.ts (Web Worker), dbf.types.ts
+│   │       ├── import-products/    # dbf-to-csv-parser.py + example.csv (reference format)
 │   │       └── types.ts
 │   │
 │   ├── lib/
 │   │   ├── axios.ts                # Axios instance with interceptors
 │   │   ├── utils.ts                # cn() and other utilities
-│   │   ├── constants.ts            # App constants
-│   │   └── validations/
-│   │       ├── auth.schema.ts
-│   │       ├── product.schema.ts
-│   │       ├── category.schema.ts
-│   │       ├── carousel.schema.ts
-│   │       └── storefront.schema.ts
+│   │   ├── constants.ts            # App constants (API_URL, ROUTES, PAGINATION, statuses)
+│   │   └── validations/            # Zod schemas: auth, product, category, carousel,
+│   │                               # storefront, content, bulk-images
 │   │
 │   ├── hooks/
-│   │   ├── useAuth.ts              # Auth hook wrapping store
+│   │   ├── useAuth.ts              # Auth hook wrapping store (+ isAdmin / isOwner)
 │   │   ├── useDebounce.ts          # Debounce hook for search
 │   │   └── useMediaQuery.ts        # Responsive breakpoints
 │   │
+│   ├── product-images/             # JSON payloads for bulk image updates
+│   │
 │   ├── types/
-│   │   ├── api.ts                  # API response types
-│   │   └── common.ts               # Shared types
+│   │   ├── api.ts                  # Generic API response types
+│   │   ├── common.ts               # Shared types (Timestamps, ...)
+│   │   └── parsedbf.d.ts
 │   │
 │   ├── styles/
 │   │   └── globals.css             # Tailwind directives + custom styles
@@ -184,16 +163,17 @@ sanpablo-dashboard-v2/
 │   └── main.tsx                    # Entry point
 │
 ├── .env.example
-├── .eslintrc.cjs
+├── eslint.config.js                 # ESLint 9 flat config
 ├── .prettierrc
 ├── components.json                  # shadcn/ui config
 ├── index.html
 ├── package.json
 ├── postcss.config.js
 ├── tailwind.config.ts
-├── tsconfig.json
-├── vite.config.ts
-└── AGENTS.md
+├── tsconfig.json                    # References tsconfig.app.json / tsconfig.node.json
+├── vite.config.ts                   # `@` alias -> src, dev server on 5173
+├── AGENTS.md
+└── CLAUDE.md
 ```
 
 ---
@@ -201,6 +181,8 @@ sanpablo-dashboard-v2/
 ## Coding Conventions
 
 ### TypeScript
+
+`tsconfig.app.json` enables `strict`, `noUnusedLocals` and `noUnusedParameters`. ESLint errors on unused vars; prefix intentionally unused ones with `_`.
 
 ```typescript
 // Use type for object shapes, interface for extendable contracts
@@ -250,11 +232,12 @@ export function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
 
 ### File Naming
 
-- Components: `PascalCase.tsx` (e.g., `ProductCard.tsx`)
+- Components: `PascalCase.tsx` (e.g., `ProductForm.tsx`)
 - Hooks: `camelCase.ts` with `use` prefix (e.g., `useAuth.ts`)
 - Utils/API: `camelCase.ts` (e.g., `products.api.ts`)
 - Types: `camelCase.ts` (e.g., `types.ts`)
 - Pages: `PascalCase.tsx` with `Page` suffix (e.g., `ProductsListPage.tsx`)
+- Zod schemas: `kebab-case.schema.ts` (e.g., `bulk-images.schema.ts`)
 
 ### Import Order
 
@@ -271,12 +254,22 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 
 // 4. Feature-specific imports
-import { ProductCard } from '../components/ProductCard';
+import { ProductsTable } from '../components/ProductsTable';
 import { useProducts } from '../api/products.queries';
 
 // 5. Types
 import type { Product } from '../types';
 ```
+
+---
+
+## Routing
+
+All routes live in `src/app/routes.tsx`. Everything except `/login` is nested under `ProtectedRoute` → `MainLayout`; `/login` is wrapped in `PublicRoute` (redirects home when already authenticated).
+
+Tool routes use Spanish paths under `/herramientas/...` (e.g. `/herramientas/importacion-1-click`, `/herramientas/imagenes`, `/herramientas/importaciones/:id`). Note that the `ROUTES` constant in `src/lib/constants.ts` still lists outdated `/tools/...` paths for most tool entries — check `routes.tsx` for the real paths.
+
+Sidebar entries are declared in `src/components/layout/navigation.ts`.
 
 ---
 
@@ -286,8 +279,8 @@ import type { Product } from '../types';
 
 ```typescript
 import axios from 'axios';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_URL } from './constants';
+import { useAuthStore } from '@/features/auth/store';
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -310,28 +303,36 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      window.location.href = '/login';
+      // Clear both localStorage token AND Zustand persisted auth state
+      // to prevent rehydration from restoring stale credentials
+      useAuthStore.getState().logout();
+
+      // Only redirect if not already on login page (avoids redirect loops)
+      if (window.location.pathname !== '/login') {
+        window.location.replace('/login');
+      }
     }
     return Promise.reject(error);
   }
 );
 ```
 
+The QueryClient (`src/app/providers.tsx`) never retries on 401 and otherwise retries once; `staleTime` is 5 minutes and `refetchOnWindowFocus` is off.
+
 ### API Functions (`src/features/products/api/products.api.ts`)
 
 ```typescript
 import { api } from '@/lib/axios';
-import type { Product, ProductsResponse, CreateProductInput } from '../types';
+import type {
+  Product,
+  ProductsResponse,
+  ProductsListParams,
+  CreateProductInput,
+  UpdateProductInput,
+} from '../types';
 
 export const productsApi = {
-  getAll: async (params?: {
-    page?: number;
-    limit?: number;
-    search?: string;
-    categoryId?: string;
-    isActive?: boolean;
-  }): Promise<ProductsResponse> => {
+  getAll: async (params?: ProductsListParams): Promise<ProductsResponse> => {
     const { data } = await api.get('/api/products', { params });
     return data;
   },
@@ -346,7 +347,7 @@ export const productsApi = {
     return data;
   },
 
-  update: async (id: string, input: Partial<CreateProductInput>): Promise<{ data: Product }> => {
+  update: async (id: string, input: UpdateProductInput): Promise<{ data: Product }> => {
     const { data } = await api.put(`/api/products/${id}`, input);
     return data;
   },
@@ -357,37 +358,49 @@ export const productsApi = {
 };
 ```
 
+Multipart uploads (imports) build a `FormData` and pass `headers: { 'Content-Type': 'multipart/form-data' }`.
+
+### Response Shapes
+
+Single items are `{ data: T }`. **Paginated list shapes differ per endpoint**, so type each one in the feature's `types.ts`:
+
+| Endpoint | Shape |
+|----------|-------|
+| `GET /api/products` | `{ data: Product[], total, page, limit, totalPages }` |
+| `GET /api/orders` | `{ data: Order[], meta: { total, page, limit, totalPages } }` |
+| `GET /api/imports` | `{ data: { items: ImportJob[], total, page, limit, totalPages } }` |
+
+`PaginatedResponse<T>` in `src/types/api.ts` matches only the imports shape and is currently unused.
+
+### Null Stripping for Storefront Config
+
+The backend rejects `null` values in storefront config PATCH bodies. `storefront-config.api.ts` runs inputs through `removeNullValues` / `removeNullValuesDeep` (deep is used for nested objects like `socialLinks`) before sending. Do the same for any new storefront config endpoint.
+
 ### TanStack Query Hooks (`src/features/products/api/products.queries.ts`)
 
 ```typescript
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from './products.api';
-import type { CreateProductInput } from '../types';
+import type { ProductsListParams, CreateProductInput, UpdateProductInput } from '../types';
 
-// Query keys as const for type safety
+// Query keys factory
 export const productKeys = {
   all: ['products'] as const,
   lists: () => [...productKeys.all, 'list'] as const,
-  list: (filters: Record<string, unknown>) => [...productKeys.lists(), filters] as const,
+  list: (params: ProductsListParams) => [...productKeys.lists(), params] as const,
   details: () => [...productKeys.all, 'detail'] as const,
   detail: (id: string) => [...productKeys.details(), id] as const,
 };
 
-// List query with filters
-export function useProducts(params?: {
-  page?: number;
-  limit?: number;
-  search?: string;
-  categoryId?: string;
-  isActive?: boolean;
-}) {
+// List products with filters and pagination
+export function useProducts(params?: ProductsListParams) {
   return useQuery({
     queryKey: productKeys.list(params ?? {}),
     queryFn: () => productsApi.getAll(params),
   });
 }
 
-// Single item query
+// Get single product by ID
 export function useProduct(id: string) {
   return useQuery({
     queryKey: productKeys.detail(id),
@@ -396,7 +409,7 @@ export function useProduct(id: string) {
   });
 }
 
-// Create mutation
+// Create product mutation
 export function useCreateProduct() {
   const queryClient = useQueryClient();
 
@@ -408,12 +421,12 @@ export function useCreateProduct() {
   });
 }
 
-// Update mutation
+// Update product mutation
 export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<CreateProductInput> }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateProductInput }) =>
       productsApi.update(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: productKeys.lists() });
@@ -422,7 +435,7 @@ export function useUpdateProduct() {
   });
 }
 
-// Delete mutation
+// Delete product mutation
 export function useDeleteProduct() {
   const queryClient = useQueryClient();
 
@@ -435,22 +448,22 @@ export function useDeleteProduct() {
 }
 ```
 
+### Polling Long-Running Jobs
+
+`useImportJob` (`src/features/tools/api/imports.queries.ts`) uses a function `refetchInterval` that polls every 2s only while the job status is `pending` or `processing`, then stops. Use the same approach for any other async job.
+
 ---
 
 ## Zustand Store Pattern
 
 ### Auth Store (`src/features/auth/store.ts`)
 
+The token lives in two places: `localStorage['token']` (read by the axios request interceptor) and the persisted `auth-storage` store. Always change it through the store actions so both stay in sync; never write `localStorage['token']` directly. In components use `useAuth()` from `src/hooks/useAuth.ts`.
+
 ```typescript
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-type User = {
-  id: string;
-  email: string;
-  fullName: string;
-  role: 'owner' | 'admin';
-};
+import type { User } from './types';
 
 type AuthState = {
   user: User | null;
@@ -462,14 +475,19 @@ type AuthActions = {
   login: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
+  setToken: (token: string) => void;
+};
+
+const initialState: AuthState = {
+  user: null,
+  token: null,
+  isAuthenticated: false,
 };
 
 export const useAuthStore = create<AuthState & AuthActions>()(
   persist(
     (set) => ({
-      user: null,
-      token: null,
-      isAuthenticated: false,
+      ...initialState,
 
       login: (user, token) => {
         localStorage.setItem('token', token);
@@ -478,17 +496,32 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
       logout: () => {
         localStorage.removeItem('token');
-        set({ user: null, token: null, isAuthenticated: false });
+        set(initialState);
       },
 
       updateUser: (userData) =>
         set((state) => ({
           user: state.user ? { ...state.user, ...userData } : null,
         })),
+
+      setToken: (token) => {
+        localStorage.setItem('token', token);
+        set({ token });
+      },
     }),
     {
       name: 'auth-storage',
-      partialize: (state) => ({ user: state.user, token: state.token }),
+      partialize: (state) => ({
+        user: state.user,
+        token: state.token,
+        isAuthenticated: state.isAuthenticated,
+      }),
+      onRehydrateStorage: () => (state) => {
+        // Sync token to localStorage on rehydration
+        if (state?.token) {
+          localStorage.setItem('token', state.token);
+        }
+      },
     }
   )
 );
@@ -500,17 +533,35 @@ export const useAuthStore = create<AuthState & AuthActions>()(
 
 ### Validation Schema (`src/lib/validations/product.schema.ts`)
 
+Optional string fields that come from inputs accept `''` via `.or(z.literal(''))`.
+
 ```typescript
 import { z } from 'zod';
 
 export const productSchema = z.object({
-  name: z.string().min(1, 'El nombre es requerido').max(255),
-  sku: z.string().min(1, 'El SKU es requerido').max(50),
-  description: z.string().optional(),
-  regularPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Precio invalido'),
-  salePrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Precio invalido').nullable().optional(),
-  categoryId: z.string().uuid().nullable().optional(),
+  sku: z
+    .string()
+    .min(1, 'El SKU es requerido')
+    .max(50, 'El SKU no puede tener más de 50 caracteres'),
+  name: z
+    .string()
+    .min(1, 'El nombre es requerido')
+    .max(255, 'El nombre no puede tener más de 255 caracteres'),
+  description: z.string().nullable().optional(),
+  regularPrice: z
+    .string()
+    .min(1, 'El precio es requerido')
+    .regex(/^\d+(\.\d{1,2})?$/, 'Precio inválido (ej: 1000 o 1000.50)'),
+  salePrice: z
+    .string()
+    .regex(/^\d+(\.\d{1,2})?$/, 'Precio de oferta inválido')
+    .nullable()
+    .optional()
+    .or(z.literal('')),
+  imageUrl: z.string().url('URL de imagen inválida').nullable().optional().or(z.literal('')),
+  categoryId: z.string().uuid('Categoría inválida').nullable().optional().or(z.literal('')),
   isActive: z.boolean().default(true),
+  // ...more fields
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -563,20 +614,6 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={form.control}
-          name="sku"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>SKU</FormLabel>
-              <FormControl>
-                <Input placeholder="SKU-001" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
 
         {/* More fields... */}
 
@@ -593,14 +630,20 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
 
 ## API Endpoints Reference
 
+These are the endpoints the dashboard calls (see `src/features/*/api/*.api.ts`).
+
 ### Authentication
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
 | POST | `/api/auth/login` | Login user |
 | GET | `/api/auth/me` | Get current user |
 | PUT | `/api/auth/me` | Update profile |
 | PUT | `/api/auth/password` | Change password |
+
+### Metrics
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/metrics/overview` | Dashboard overview (date range params) |
 
 ### Products
 | Method | Endpoint | Description |
@@ -609,16 +652,17 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
 | GET | `/api/products/:id` | Get product by ID |
 | GET | `/api/products/sku/:sku` | Get product by SKU |
 | POST | `/api/products` | Create product |
-| PUT | `/api/products/:id` | Update product |
+| PUT | `/api/products/:id` | Update product (also used to toggle `isActive`) |
 | DELETE | `/api/products/:id` | Delete product (soft) |
 
-**Query params for list:**
+**Query params for list** (`ProductsListParams`):
 - `page` (number): Page number
 - `limit` (number): Items per page (default 20)
 - `search` (string): Search in name/SKU
 - `categoryId` (uuid): Filter by category
 - `isActive` (boolean): Filter by active status
 - `minPrice` / `maxPrice` (number): Price range
+- `sortBy` (`name` | `sku` | `regularPrice` | `createdAt` | `updatedAt`) / `sortOrder` (`asc` | `desc`)
 
 ### Categories
 | Method | Endpoint | Description |
@@ -628,7 +672,7 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
 | POST | `/api/categories` | Create category |
 | PUT | `/api/categories/:id` | Update category |
 | DELETE | `/api/categories/:id` | Delete category |
-| PUT | `/api/categories/reorder` | Reorder categories |
+| PUT | `/api/categories/reorder` | Reorder categories (`{ categoryIds }`) |
 
 ### Carousels
 | Method | Endpoint | Description |
@@ -640,37 +684,52 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
 | POST | `/api/carousels` | Create carousel |
 | PUT | `/api/carousels/:id` | Update carousel |
 | DELETE | `/api/carousels/:id` | Delete carousel |
-| PUT | `/api/carousels/reorder` | Reorder carousels |
+| PUT | `/api/carousels/reorder` | Reorder carousels (`{ carouselIds }`) |
 | POST | `/api/carousels/:id/products` | Add products to carousel |
 | DELETE | `/api/carousels/:id/products` | Remove products |
 | PUT | `/api/carousels/:id/products/reorder` | Reorder products |
 
+### Orders
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/orders` | List orders (paginated, filterable) |
+| GET | `/api/orders/:id` | Get order by ID |
+| GET | `/api/orders/number/:orderNumber` | Get order by order number |
+| PUT | `/api/orders/:id/status` | Update order status |
+| DELETE | `/api/orders/:id` | Delete order |
+
 ### Storefront Config
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/storefront-config` | Get all config |
-| PUT | `/api/storefront-config` | Update config |
-| PUT | `/api/storefront-config/branding` | Update branding |
-| PUT | `/api/storefront-config/colors` | Update colors |
-| PUT | `/api/storefront-config/banners` | Update banners |
-| PUT | `/api/storefront-config/faq` | Update FAQ |
-| PUT | `/api/storefront-config/contact` | Update contact |
-| PUT | `/api/storefront-config/seo` | Update SEO |
+| GET | `/api/storefront/config` | Get all config (public) |
+| PUT | `/api/storefront/config` | Update full config |
+| PATCH | `/api/storefront/config/branding` | Update branding |
+| PATCH | `/api/storefront/config/colors` | Update colors |
+| PATCH | `/api/storefront/config/banners` | Update banners |
+| PATCH | `/api/storefront/config/faq` | Update FAQ |
+| PATCH | `/api/storefront/config/contact` | Update contact & social links |
+| PATCH | `/api/storefront/config/seo` | Update SEO |
+| PATCH | `/api/storefront/config/legal` | Update Terms & Conditions |
 
-### Import Jobs
+The `content` feature (FAQ / Terms pages) reads and writes through these same endpoints.
+
+### Imports
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/import-jobs` | List import jobs |
-| GET | `/api/import-jobs/:id` | Get job details |
-| POST | `/api/import-jobs` | Create import job |
-| DELETE | `/api/import-jobs/:id` | Cancel job |
+| GET | `/api/imports` | List import jobs (`page`, `limit`, `status`) |
+| GET | `/api/imports/:id` | Get job details |
+| POST | `/api/imports` | Create import job (multipart CSV `file`) |
+| POST | `/api/imports/:id/cancel` | Cancel job |
+| GET | `/api/imports/template` | Download CSV template (blob) |
+| POST | `/api/imports/bulk-images` | Bulk image update (multipart JSON `file`) |
 
-### Orders (for reference)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/orders` | List orders (admin) |
-| GET | `/api/orders/:id` | Get order by ID |
-| PUT | `/api/orders/:id/status` | Update order status |
+---
+
+## Import Tools
+
+- **1-click import** (`OneClickImporter.tsx`): the user drops a Visual FoxPro `.dbf` (max 100MB). The file is parsed in a Web Worker (`workers/dbf.worker.ts`, loaded via Vite's `import DbfWorker from '../workers/dbf.worker?worker'`) using the `shapefile` library with windows-1252 encoding, mapped to the API CSV columns, and uploaded to `POST /api/imports`. Progress is shown by polling the job.
+- The worker's column mapping mirrors `features/tools/import-products/dbf-to-csv-parser.py`; `example.csv` in the same folder is the reference CSV format. Keep them in sync.
+- **Bulk images** (`BulkImageUpdater.tsx`): uploads a JSON file to `POST /api/imports/bulk-images`; the default payload is imported from `src/product-images/*.json` and validated with `bulk-images.schema.ts`.
 
 ---
 
@@ -679,14 +738,14 @@ export function ProductForm({ defaultValues, onSubmit, isLoading }: ProductFormP
 ### Adding a New Feature
 
 1. Create feature folder in `src/features/`
-2. Define types in `types.ts`
-3. Create API functions in `api/feature.api.ts`
-4. Create TanStack Query hooks in `api/feature.queries.ts`
+2. Define types in `types.ts` (including the exact response shape of each endpoint)
+3. Create API functions in `api/<feature>.api.ts`
+4. Create TanStack Query hooks in `api/<feature>.queries.ts`
 5. Create Zod schema in `src/lib/validations/`
 6. Build components in `components/`
 7. Create pages in `pages/`
 8. Add routes to `src/app/routes.tsx`
-9. Add navigation item to Sidebar
+9. Add navigation item to `src/components/layout/navigation.ts`
 
 ### Adding a shadcn/ui Component
 
@@ -697,28 +756,36 @@ npx shadcn@latest add dialog
 # etc.
 ```
 
-### Creating a Data Table
+### Building a List Page with Pagination
 
-Use the reusable `DataTable` component with TanStack Table:
+There is no generic `DataTable`. Each feature has its own table component (e.g. `ProductsTable.tsx`, `OrdersTable.tsx`) built on `@/components/ui/table`, combined with the shared `Pagination` component. Filters and pagination are kept in the URL with `useSearchParams`:
 
 ```tsx
-import { DataTable } from '@/components/common/DataTable';
-import { columns } from './columns'; // Define columns separately
+import { useSearchParams } from 'react-router-dom';
+import { Pagination } from '@/components/common/Pagination';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { ProductsTable } from '../components/ProductsTable';
+import { useProducts } from '../api/products.queries';
 
-function ProductsTable() {
-  const { data, isLoading } = useProducts();
+export function ProductsListPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ...derive `filters` from searchParams; handleFiltersChange writes them back
+  const { data, isLoading } = useProducts(filters);
 
   return (
-    <DataTable
-      columns={columns}
-      data={data?.data.items ?? []}
-      isLoading={isLoading}
-      pagination={{
-        page: data?.data.page ?? 1,
-        totalPages: data?.data.totalPages ?? 1,
-        onPageChange: (page) => setSearchParams({ page: String(page) }),
-      }}
-    />
+    <PageContainer title="Productos" description="Gestiona el catálogo de productos de la tienda">
+      <ProductsTable products={data?.data ?? []} isLoading={isLoading} />
+      {data && data.totalPages > 0 && (
+        <Pagination
+          page={data.page}
+          totalPages={data.totalPages}
+          totalItems={data.total}
+          limit={data.limit}
+          onPageChange={(page) => handleFiltersChange({ ...filters, page })}
+          onLimitChange={(limit) => handleFiltersChange({ ...filters, limit, page: 1 })}
+        />
+      )}
+    </PageContainer>
   );
 }
 ```
@@ -750,6 +817,7 @@ When implementing a feature, ensure:
 - [ ] Toast notifications for user feedback
 - [ ] Responsive design works
 - [ ] Protected routes are used for admin pages
+- [ ] `npm run typecheck` and `npm run lint` pass
 
 ---
 
@@ -775,10 +843,10 @@ chore(deps): update TanStack Query to v5.60
 
 ```bash
 # Development
-npm run dev           # Start dev server
+npm run dev           # Start dev server (http://localhost:5173)
 
 # Build
-npm run build         # Production build
+npm run build         # Type-check (tsc -b) + production build
 npm run preview       # Preview production build
 
 # Linting
@@ -800,11 +868,12 @@ npx shadcn@latest add [component]
 2. **Prefer composition** - Build complex UI from smaller, reusable components
 3. **Type everything** - Leverage TypeScript for type safety
 4. **Handle all states** - Loading, error, empty, and success states
-5. **Use existing components** - Check `src/components/ui/` before creating new ones
+5. **Use existing components** - Check `src/components/ui/` and `src/components/common/` before creating new ones
 6. **Validate inputs** - Use Zod schemas for form validation
 7. **Invalidate queries** - After mutations, invalidate relevant queries
 8. **Follow file naming** - Use established naming conventions
 9. **Keep components focused** - Single responsibility principle
 10. **Document complex logic** - Add comments for non-obvious code
+11. **Verify response shapes** - Paginated shapes differ per endpoint; check the existing feature types or Swagger before assuming one
 
 When in doubt about API structure, reference the Swagger documentation at `http://localhost:3000/api/docs`.
