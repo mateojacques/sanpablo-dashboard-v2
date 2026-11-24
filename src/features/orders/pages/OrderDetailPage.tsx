@@ -109,8 +109,9 @@ export function OrderDetailPage() {
                   <TableRow>
                     <TableHead>Producto</TableHead>
                     <TableHead>SKU</TableHead>
+                    <TableHead>Venta</TableHead>
                     <TableHead className="text-center">Cantidad</TableHead>
-                    <TableHead className="text-right">Precio Unit.</TableHead>
+                    <TableHead className="text-right">Precio por venta</TableHead>
                     <TableHead className="text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -119,6 +120,11 @@ export function OrderDetailPage() {
                     <TableRow key={item.id}>
                       <TableCell className="font-medium">{item.productName}</TableCell>
                       <TableCell className="font-mono text-sm">{item.productSku}</TableCell>
+                      <TableCell>
+                        {item.saleUnit === 'pack'
+                          ? `Caja de ${item.unitsPerSale} unidades`
+                          : 'Unidad'}
+                      </TableCell>
                       <TableCell className="text-center">{item.quantity}</TableCell>
                       <TableCell className="text-right">{formatPrice(item.unitPrice)}</TableCell>
                       <TableCell className="text-right font-medium">

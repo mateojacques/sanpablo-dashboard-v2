@@ -35,6 +35,12 @@ export const productSchema = z.object({
   dimensionHeight: z.string().nullable().optional(),
   categoryId: z.string().uuid('Categoría inválida').nullable().optional().or(z.literal('')),
   isActive: z.boolean().default(true),
+  // Empty follows the stock table; 1 sells only by unit
+  packSizeOverride: z
+    .string()
+    .regex(/^\d*$/, 'Ingrese un número entero')
+    .refine((v) => v === '' || Number(v) >= 1, 'Debe ser 1 o más')
+    .optional(),
 });
 
 export type ProductFormData = z.infer<typeof productSchema>;
@@ -50,5 +56,9 @@ export function transformProductFormData(data: ProductFormData) {
     videoUrl: data.videoUrl || null,
     categoryId: data.categoryId || null,
     description: data.description || null,
+    packSizeOverride: data.packSizeOverride ? Number(data.packSizeOverride) : null,
   };
 }
+
+// What the product form submits: empty strings as null, the pack size as a number
+export type ProductSubmitData = ReturnType<typeof transformProductFormData>;

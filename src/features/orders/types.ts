@@ -16,7 +16,12 @@ export type OrderItem = {
   productId: string | null;
   productSku: string;
   productName: string;
+  // Sale units: loose units or whole packs
   quantity: number;
+  // 'unit' for orders placed before packs existed
+  saleUnit: 'unit' | 'pack';
+  unitsPerSale: number;
+  // Price of one sale unit (the pack price for a pack line)
   unitPrice: string;
   totalPrice: string;
 };

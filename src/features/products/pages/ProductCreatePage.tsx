@@ -6,13 +6,13 @@ import { Button } from '@/components/ui/button';
 import { ProductForm } from '../components/ProductForm';
 import { useCreateProduct } from '../api/products.queries';
 import { ROUTES } from '@/lib/constants';
-import type { ProductFormData } from '@/lib/validations/product.schema';
+import type { ProductSubmitData } from '@/lib/validations/product.schema';
 
 export function ProductCreatePage() {
   const navigate = useNavigate();
   const createProduct = useCreateProduct();
 
-  const handleSubmit = async (data: ProductFormData) => {
+  const handleSubmit = async (data: ProductSubmitData) => {
     try {
       await createProduct.mutateAsync(data);
       toast.success('Producto creado correctamente');

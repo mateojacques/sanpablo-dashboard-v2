@@ -23,6 +23,11 @@ export type Product = {
   supplierCode: string | null;
   barcode: string | null;
   priceUpdatedAt: string | null;
+  // Units per pack: from the stock table (STUNICOMP), the admin's override
+  // (null follows the table, 1 = no pack) and the result (null = sold only by unit)
+  sourcePackSize: number | null;
+  packSizeOverride: number | null;
+  packSize: number | null;
   // Set by the catalogue evaluation
   publicationStatus: PublicationStatus;
   publicationIssues: PublicationIssue[];
@@ -42,6 +47,8 @@ export type ProductsListParams = {
   isActive?: boolean;
   publicationStatus?: PublicationStatus;
   issue?: PublicationIssue;
+  // Products whose effective pack size is above 1
+  hasPack?: boolean;
   minPrice?: number;
   maxPrice?: number;
   sortBy?: 'name' | 'sku' | 'regularPrice' | 'price' | 'createdAt' | 'updatedAt' | 'random';
@@ -73,6 +80,8 @@ export type CreateProductInput = {
   dimensionHeight?: string | null;
   categoryId?: string | null;
   isActive?: boolean;
+  // Edit only; null follows the stock table
+  packSizeOverride?: number | null;
 };
 
 export type UpdateProductInput = Partial<CreateProductInput>;

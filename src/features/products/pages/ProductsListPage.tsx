@@ -23,6 +23,7 @@ export function ProductsListPage() {
       searchParams.get('isActive') === null
         ? undefined
         : searchParams.get('isActive') === 'true',
+    hasPack: searchParams.get('hasPack') === 'true' ? true : undefined,
     sortBy: (searchParams.get('sortBy') as ProductsListParams['sortBy']) ?? undefined,
     sortOrder: (searchParams.get('sortOrder') as ProductsListParams['sortOrder']) ?? undefined,
   };
@@ -47,6 +48,9 @@ export function ProductsListPage() {
     }
     if (newFilters.isActive !== undefined) {
       params.set('isActive', String(newFilters.isActive));
+    }
+    if (newFilters.hasPack) {
+      params.set('hasPack', 'true');
     }
     if (newFilters.sortBy) {
       params.set('sortBy', newFilters.sortBy);

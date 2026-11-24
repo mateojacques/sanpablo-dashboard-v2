@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { ProductForm } from '../components/ProductForm';
 import { useProduct, useUpdateProduct } from '../api/products.queries';
 import { ROUTES } from '@/lib/constants';
-import type { ProductFormData } from '@/lib/validations/product.schema';
+import type { ProductSubmitData } from '@/lib/validations/product.schema';
 
 export function ProductEditPage() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export function ProductEditPage() {
   const { data, isLoading, error } = useProduct(id!);
   const updateProduct = useUpdateProduct();
 
-  const handleSubmit = async (formData: ProductFormData) => {
+  const handleSubmit = async (formData: ProductSubmitData) => {
     if (!id) return;
 
     try {

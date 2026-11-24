@@ -27,13 +27,14 @@ import { flattenCategoryTree } from '@/features/categories/types';
 import {
   productSchema,
   type ProductFormData,
+  type ProductSubmitData,
   transformProductFormData,
 } from '@/lib/validations/product.schema';
 import type { Product } from '../types';
 
 type ProductFormProps = {
   product?: Product;
-  onSubmit: (data: ProductFormData) => void;
+  onSubmit: (data: ProductSubmitData) => void;
   isLoading?: boolean;
   submitLabel?: string;
 };
@@ -68,12 +69,15 @@ export function ProductForm({
       dimensionHeight: product?.dimensionHeight ?? '',
       categoryId: product?.categoryId ?? '',
       isActive: product?.isActive ?? true,
+      packSizeOverride:
+        product?.packSizeOverride === null || product?.packSizeOverride === undefined
+          ? ''
+          : String(product.packSizeOverride),
     },
   });
 
   const handleSubmit = (data: ProductFormData) => {
-    const transformed = transformProductFormData(data);
-    onSubmit(transformed as ProductFormData);
+    onSubmit(transformProductFormData(data));
   };
 
   return (
@@ -245,6 +249,46 @@ export function ProductForm({
                   </FormItem>
                 )}
               />
+
+              {product && (
+                <FormField
+                  control={form.control}
+                  name="packSizeOverride"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Unidades por caja</FormLabel>
+                      <div className="flex gap-2">
+                        <FormControl>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder={
+                              product.sourcePackSize
+                                ? `Del sistema: ${product.sourcePackSize}`
+                                : 'Del sistema: sin caja'
+                            }
+                            {...field}
+                            value={field.value ?? ''}
+                          />
+                        </FormControl>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={!field.value}
+                          onClick={() => field.onChange('')}
+                        >
+                          Seguir al sistema
+                        </Button>
+                      </div>
+                      <FormDescription>
+                        1 = se vende solo por unidad. Vacío: usa el valor del sistema. El precio
+                        de la caja es el precio por unidad por esta cantidad.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </CardContent>
           </Card>
 

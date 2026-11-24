@@ -57,6 +57,10 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
     });
   };
 
+  const handlePackChange = (value: string) => {
+    onFiltersChange({ ...filters, hasPack: value === 'pack' ? true : undefined, page: 1 });
+  };
+
   const handleClearFilters = () => {
     setSearchInput('');
     onFiltersChange({
@@ -65,7 +69,8 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
     });
   };
 
-  const hasActiveFilters = filters.search || filters.categoryId || filters.isActive !== undefined;
+  const hasActiveFilters =
+    filters.search || filters.categoryId || filters.isActive !== undefined || filters.hasPack;
 
   return (
     <div className="flex flex-col gap-4 rounded-lg border bg-card p-4">
@@ -114,6 +119,17 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
           </SelectContent>
         </Select>
 
+        {/* Pack filter */}
+        <Select value={filters.hasPack ? 'pack' : 'all'} onValueChange={handlePackChange}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectValue placeholder="Venta" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Por unidad o caja</SelectItem>
+            <SelectItem value="pack">Con caja</SelectItem>
+          </SelectContent>
+        </Select>
+
         {/* Clear filters */}
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={handleClearFilters} className="gap-2">
@@ -142,6 +158,9 @@ export function ProductFilters({ filters, onFiltersChange }: ProductFiltersProps
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">
               {filters.isActive ? 'Activos' : 'Inactivos'}
             </span>
+          )}
+          {filters.hasPack && (
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-primary">Con caja</span>
           )}
         </div>
       )}
