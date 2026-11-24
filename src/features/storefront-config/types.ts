@@ -84,6 +84,8 @@ export type SeoConfig = {
 export type OrderingConfig = {
   availabilityNotice: string;
   minimumOrderNotice: string;
+  /** Missing on configs saved before the price notice existed. */
+  priceNotice?: string;
 };
 
 // Legal configuration

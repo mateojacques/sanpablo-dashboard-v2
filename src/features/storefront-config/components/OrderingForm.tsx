@@ -19,10 +19,13 @@ import { useUpdateOrdering } from '../api/storefront-config.queries';
 import type { OrderingConfig } from '../types';
 
 const DEFAULT_AVAILABILITY = 'La disponibilidad y el plazo de entrega se confirman por WhatsApp.';
+const DEFAULT_PRICE =
+  'Las imágenes son ilustrativas. Los precios son finales, incluyen IVA y pueden cambiar sin previo aviso.';
 
 const orderingSchema = z.object({
   availabilityNotice: z.string().max(300, 'Máximo 300 caracteres'),
   minimumOrderNotice: z.string().max(300, 'Máximo 300 caracteres'),
+  priceNotice: z.string().max(300, 'Máximo 300 caracteres'),
 });
 
 type OrderingFormData = z.infer<typeof orderingSchema>;
@@ -40,6 +43,7 @@ export function OrderingForm({ initialData }: OrderingFormProps) {
     defaultValues: {
       availabilityNotice: initialData?.availabilityNotice ?? DEFAULT_AVAILABILITY,
       minimumOrderNotice: initialData?.minimumOrderNotice ?? '',
+      priceNotice: initialData?.priceNotice ?? DEFAULT_PRICE,
     },
   });
 
@@ -48,6 +52,7 @@ export function OrderingForm({ initialData }: OrderingFormProps) {
       await updateOrdering.mutateAsync({
         availabilityNotice: data.availabilityNotice.trim(),
         minimumOrderNotice: data.minimumOrderNotice.trim(),
+        priceNotice: data.priceNotice.trim(),
       });
       toast.success('Avisos de pedidos actualizados');
     } catch {
@@ -102,6 +107,24 @@ export function OrderingForm({ initialData }: OrderingFormProps) {
                   </FormControl>
                   <FormDescription>
                     Se muestra en el carrito y en la revisión del pedido. La tienda no lo exige.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="priceNotice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Aviso de precios e imágenes</FormLabel>
+                  <FormControl>
+                    <Textarea rows={2} maxLength={300} {...field} />
+                  </FormControl>
+                  <FormDescription>
+                    Se muestra en el pie de página, en la ficha del producto, en el carrito, en la
+                    revisión del pedido y en el correo de confirmación. Si queda vacío, no se muestra.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
