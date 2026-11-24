@@ -14,8 +14,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { getDbfErrorMessage } from '../api/imports.api';
+import { getDbfErrorMessage, getRemovalPreview, type RemovalPreview } from '../api/imports.api';
 import { useCreateDbfImportJob } from '../api/imports.queries';
 
 type OneClickImporterProps = {
@@ -37,6 +47,7 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<ImportPhase>('idle');
   const [uploadPercent, setUploadPercent] = useState(0);
+  const [removals, setRemovals] = useState<RemovalPreview | null>(null);
 
   const createImport = useCreateDbfImportJob();
   const isBusy = phase === 'uploading' || phase === 'processing';
@@ -79,9 +90,10 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
     setUploadPercent(0);
   };
 
-  const handleStartImport = async () => {
+  const handleStartImport = async (confirmRemovals = false) => {
     if (!selectedFile) return;
 
+    setRemovals(null);
     setPhase('uploading');
     setUploadPercent(0);
     setError(null);
@@ -89,6 +101,7 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
     try {
       const result = await createImport.mutateAsync({
         file: selectedFile,
+        confirmRemovals,
         onUploadProgress: (percent) => {
           setUploadPercent(percent);
           // The server converts the DBF once the upload is complete
@@ -100,6 +113,13 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
       toast.success('Importación iniciada');
       onImportStarted?.(result.data.id);
     } catch (err) {
+      // The file leaves out many products: ask before importing it
+      const preview = getRemovalPreview(err);
+      if (preview) {
+        setRemovals(preview);
+        setPhase('idle');
+        return;
+      }
       const message = getDbfErrorMessage(err, 'Error al iniciar la importación');
       setError(message);
       setPhase('idle');
@@ -124,6 +144,11 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <p className="text-sm font-medium">
+          Suba la tabla completa stockWeb.DBF. Los productos que no estén en el archivo dejan de
+          mostrarse en la tienda.
+        </p>
+
         {/* Dropzone */}
         {!selectedFile ? (
           <div
@@ -217,7 +242,7 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
         {/* Action button */}
         {selectedFile && phase === 'idle' && (
           <div className="flex justify-end">
-            <Button onClick={handleStartImport}>
+            <Button onClick={() => handleStartImport()}>
               <Zap className="mr-2 h-4 w-4" />
               Iniciar Importacion
             </Button>
@@ -239,7 +264,7 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
             Como funciona:
           </p>
           <ol className="list-decimal list-inside text-muted-foreground space-y-1">
-            <li>Selecciona tu archivo DBF (stock.DBF u otro)</li>
+            <li>Seleccione la tabla completa stockWeb.DBF</li>
             <li>Haz clic en "Iniciar Importacion"</li>
             <li>El servidor convierte el DBF al formato de importación</li>
             <li>Los productos se importan/actualizan segun el SKU</li>
@@ -250,6 +275,36 @@ export function OneClickImporter({ onImportStarted }: OneClickImporterProps) {
           </p>
         </div>
       </CardContent>
+
+      <AlertDialog open={removals !== null} onOpenChange={(open) => !open && setRemovals(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Este archivo deja fuera {removals?.count.toLocaleString('es-AR')} productos
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Hoy hay {removals?.total.toLocaleString('es-AR')} productos de la tabla. Si continúa,
+              los que no están en el archivo dejan de mostrarse en la tienda. Vuelven a mostrarse si
+              aparecen en una carga posterior.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {removals && removals.sample.length > 0 && (
+            <ul className="max-h-48 overflow-y-auto rounded-md border p-3 text-sm space-y-1">
+              {removals.sample.map((p) => (
+                <li key={p.sku} className="truncate">
+                  <span className="font-mono">{p.sku}</span> · {p.name}
+                </li>
+              ))}
+            </ul>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleStartImport(true)}>
+              Importar igual
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

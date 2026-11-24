@@ -12,6 +12,8 @@ export type ImportSummary = {
   priceChanged: number;
   // Image bank jobs only
   images?: { stored: number; failed: number };
+  // Full DBF snapshots only: products this upload marked as missing from the table
+  missingFromSource?: number;
   evaluation: EvaluationSummary | null;
 };
 

@@ -2,6 +2,7 @@ import type { PublicationIssue } from './types';
 
 // Spanish labels for the API's publication issue codes
 export const ISSUE_LABELS: Record<PublicationIssue, string> = {
+  not_in_source: 'No está en la tabla del sistema',
   inactive: 'Desactivado',
   not_catalog_supplier: 'Otro proveedor',
   no_photo: 'Sin foto',

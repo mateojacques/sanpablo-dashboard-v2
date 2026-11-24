@@ -1,5 +1,6 @@
 // Publication issues the API sets on each product (src/modules/catalog in the API)
 export const PUBLICATION_ISSUES = [
+  'not_in_source',
   'inactive',
   'not_catalog_supplier',
   'no_photo',

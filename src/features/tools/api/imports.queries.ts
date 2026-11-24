@@ -45,10 +45,12 @@ export function useCreateDbfImportJob() {
     mutationFn: ({
       file,
       onUploadProgress,
+      confirmRemovals,
     }: {
       file: File;
       onUploadProgress?: (percent: number) => void;
-    }) => importsApi.createFromDbf(file, onUploadProgress),
+      confirmRemovals?: boolean;
+    }) => importsApi.createFromDbf(file, onUploadProgress, confirmRemovals),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: importKeys.lists() });
     },

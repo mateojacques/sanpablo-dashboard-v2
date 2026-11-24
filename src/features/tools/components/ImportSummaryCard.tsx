@@ -36,6 +36,9 @@ export function ImportSummaryCard({ jobId }: { jobId: string }) {
   } else {
     changes.push({ label: 'Cambios de precio', value: summary.priceChanged });
   }
+  if (summary.missingFromSource !== undefined) {
+    changes.push({ label: 'Ya no están en la tabla', value: summary.missingFromSource });
+  }
 
   const evaluation = summary.evaluation;
 

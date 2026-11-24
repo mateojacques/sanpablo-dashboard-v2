@@ -15,6 +15,18 @@ export const DBF_ERROR_MESSAGES: Record<string, string> = {
   DBF_MISSING_FIELDS: 'Al DBF le faltan campos requeridos: {campos}',
 };
 
+// The 409 CONFIRM_REMOVALS details: products the upload would take out of the store
+export type RemovalPreview = {
+  count: number;
+  total: number;
+  sample: { sku: string; name: string }[];
+};
+
+export function getRemovalPreview(error: unknown): RemovalPreview | null {
+  const { code, details } = getApiErrorCode(error);
+  return code === 'CONFIRM_REMOVALS' ? (details as RemovalPreview) : null;
+}
+
 export function getDbfErrorMessage(error: unknown, fallback: string): string {
   const { code, details } = getApiErrorCode(error);
   const message = code ? DBF_ERROR_MESSAGES[code] : undefined;
@@ -40,15 +52,18 @@ export const importsApi = {
     return data;
   },
 
-  // Upload a DBF file; the API converts it to CSV and creates an import job
+  // Upload a DBF file; the API converts it to CSV and creates an import job.
+  // confirmRemovals accepts a file that hides many products (409 CONFIRM_REMOVALS otherwise)
   createFromDbf: async (
     file: File,
-    onUploadProgress?: (percent: number) => void
+    onUploadProgress?: (percent: number) => void,
+    confirmRemovals = false
   ): Promise<ImportJobResponse> => {
     const formData = new FormData();
     formData.append('file', file);
 
     const { data } = await api.post('/api/imports/dbf', formData, {
+      params: confirmRemovals ? { confirmRemovals: 'true' } : undefined,
       headers: {
         'Content-Type': 'multipart/form-data',
       },
